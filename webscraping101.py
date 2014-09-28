@@ -22,6 +22,21 @@ def has_hoofdvestiging_tag(search_result):
     else:
         return True
 
+def retrieve_aantal_resultaten(searchpage):
+    aantal = 0
+    feedback = searchpage.find("div", class_="feedback")
+    if feedback is not None:
+        aantal = feedback.text[0 : feedback.text.find(" ")]
+    return int(aantal)
+
+def calc_aantal_paginas(aantal_resultaten):
+    rest = aantal_resultaten % 10
+    if rest > 0:
+        add_page = 1
+    else:
+        add_page = 0
+    return (aantal_resultaten / 10) + add_page
+
 def retrieve_kvk_meta(kvk_meta):
     result = ""
     for li in kvk_meta.find_all("li"):
@@ -56,6 +71,9 @@ def get_headline_links(search_url):
         handelsnamen = []
     else:
         handelsnamen = retrieve_handelsnamen(searchpage)
+        aantal_resultaten = retrieve_aantal_resultaten(searchpage)
+        aantal_paginas = calc_aantal_paginas(aantal_resultaten)
+        handelsnamen.insert(0, "Aantal resultaten: " + str(aantal_resultaten) + " [aantal pagina's: " + str(aantal_paginas) + "]")
     return handelsnamen
 
 def help_message():
