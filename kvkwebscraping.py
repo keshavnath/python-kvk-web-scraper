@@ -105,14 +105,17 @@ def search(filter, max_results):
     return handelsnamen
 
 def help_message():
-    print "webscraping101.py -n <handelsnaam> -p <plaats>"
+    print "webscraping101.py -n <handelsnaam> -p <plaats> -m <maxresults>"
 
 def main(argv):
     handelsnaam = ""
     plaats = ""
+    max_results = 100
+
     try:
-        opts, args = getopt.getopt(argv, "hn:p:", ["handelsnaam=", "plaats="])
-    except getopt.GetoptError:
+        opts, args = getopt.getopt(argv, "hn:p:m:", ["handelsnaam=", "plaats=", "max_results="])
+    except getopt.GetoptError, exec_error:
+        print exec_error
         help_message()
         sys.exit(2)
     for opt, arg in opts:
@@ -123,6 +126,8 @@ def main(argv):
             handelsnaam = arg
         elif opt in ("-p", "--plaats"):
             plaats = arg
+        elif opt in ("-m", "--max_results"):
+            max_results = int(arg)
     if (handelsnaam == "") and (plaats == ""):
         print "Error: no parameters specified"
         help_message()
@@ -136,10 +141,13 @@ def main(argv):
     filter["postcode"] = ""
     filter["plaats"] = plaats
 
-    handelsnamen = search(filter, 300)
+    print "max_results=%s" % max_results
+    handelsnamen = search(filter, max_results)
+
     if handelsnamen is not None:
         for handelsnaam in handelsnamen:
             print handelsnaam
             print ("Ingelezen resultaten: %s") % len(handelsnamen)
+
 if __name__ == "__main__":
     main(sys.argv[1:])
