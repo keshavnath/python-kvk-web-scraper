@@ -42,33 +42,48 @@ def calc_aantal_paginas(aantal_resultaten):
         add_page = 0
     return (aantal_resultaten / 10) + add_page
 
-def retrieve_kvk_meta(kvk_meta):
-    result = ""
+def retrieve_kvk_meta(organisatie, kvk_meta):
+    adres = {}
+    adres_cnt = 0
+    adres_fields = ( "straat", "postcode", "plaats" )
+    organisatie["adres"] = adres
     for li in kvk_meta.find_all("li"):
         if li.string is not None:
             value = li.string.strip()
             if (len(value) > 0):
-                if (result <> ""):
-                    result = result + ", "
-                result = result + value
-    return result        
+                if (value == ""):
+                    continue
+                elif (value.startswith("KVK")):
+                    organisatie["kvk_nummer"] = value[4:]
+                elif (value.startswith("Vestigingsnr.")):
+                    organisatie["vestigingsnr"] = value[14:]
+                elif (value.startswith("Nevenvestiging")):
+                    organisatie["nevenvestiging"] = "ja"
+                elif (value.startswith("Rechtspersoon")):
+                    organisatie["nevenvestiging"] = "ja"
+                else:
+                    if (adres_cnt > len(adres_fields) - 1):
+                        print "Error: unknown value found after address [%s]" % value
+                    adres[adres_fields[adres_cnt]] = value
+                    adres_cnt += 1
 
-def retrieve_handelsnamen(handelsnamen, searchpage):
+def retrieve_organisaties(organisaties, searchpage):
     for li in searchpage.find_all("li", class_="type1"):
+        organisatie = {}
         handelsnaam = li.find("h3", class_="handelsnaamHeader")
-        kvk_meta = retrieve_kvk_meta(li.find("ul", class_="kvk-meta"))
-        hoofdvestiging = ""
+        organisatie["handelsnaam"] = handelsnaam.a.string
+        retrieve_kvk_meta(organisatie, li.find("ul", class_="kvk-meta"))
         if (has_hoofdvestiging_tag(li)):
-            hoofdvestiging = "Hoofdvestiging, "
-        handelsnamen.append(handelsnaam.a.string + " [" + hoofdvestiging + kvk_meta + "]")
-    return handelsnamen
+            organisatie["hoofdvestiging"] = "Hoofdvestiging, "
+        organisaties.append(organisatie)
+    return organisaties 
 
 def load_searchpage(search_url):
     request = urlopen(search_url)
     response = request.read()
     json_encoded = response[response.find("(") + 1 : response.find(");")]
     json_encoded = json_encoded.replace("\t", " ")
-#    json_encoded = re.sub(r'(?<=>)(.*)(\\)(.*)(?=<)', r'\1\\\2\3', json_encoded)
+    #json_encoded = re.sub(r'(?<=<.*>)(.*)(\\)(.*)(?=</.*>)', r'\1\\\2\3', json_encoded)
     try:
         json_decoded = json.loads(json_encoded)
     except ValueError as e:
@@ -76,7 +91,7 @@ def load_searchpage(search_url):
         output_to_file("encoded.json", json_encoded)
         raise Exception("Error decoding json, check html_respons.html and encoded.json [" + str(e) + "]")
     else:
-        soup = BeautifulSoup(json_decoded["html"])
+        soup = BeautifulSoup(json_decoded["html"], "lxml")
         searchpage = soup.find("div", class_="searchpage")
         if searchpage is None:
             raise "Search page not found"
@@ -90,19 +105,24 @@ def init(search_url):
     return search_results 
 
 def search(filter, max_results):
-    max_pages = (max_results - (max_results % 10)) / 10
+    if max_results > -1:
+        max_pages = (max_results - (max_results % 10)) / 10
+    else:
+        max_pages = -1
     search_results = init(create_filter_url(filter, 0))
-    print "Aantal resultaten: %s [aantal pagina's: %s, max pages: %s]" % (str(search_results["results"]), str(search_results["pages"]), max_pages)
-    handelsnamen = []
-    handelsnamen.append("Aantal resultaten: " + str(search_results["results"]) + " [aantal pagina's: " + str(search_results["pages"]) + "]")
-    if search_results["pages"] < max_pages:
+    resultaten= {}
+    resultaten["stats"] = ("Aantal resultaten: " + str(search_results["results"]) + " [aantal pagina's: " + str(search_results["pages"]) + "]")
+    if search_results["pages"] < max_pages or max_pages == -1:
         max_pages = search_results["pages"]
+    print "Aantal resultaten: %s [aantal pagina's: %s, max pages: %s]" % (str(search_results["results"]), str(search_results["pages"]), max_pages)
+    organisaties = []
+    resultaten["organisaties"] = organisaties
     for page in range(0, max_pages):
         if page % 10 == 0:
             print "Pages read: %s" % page
         searchpage = load_searchpage(create_filter_url(filter, page))
-        handelsnamen = retrieve_handelsnamen(handelsnamen, searchpage)
-    return handelsnamen
+        retrieve_organisaties(organisaties, searchpage)
+    return resultaten
 
 def help_message():
     print "webscraping101.py -n <handelsnaam> -p <plaats> -m <maxresults>"
@@ -110,7 +130,7 @@ def help_message():
 def main(argv):
     handelsnaam = ""
     plaats = ""
-    max_results = 100
+    max_results = -1
 
     try:
         opts, args = getopt.getopt(argv, "hn:p:m:", ["handelsnaam=", "plaats=", "max_results="])
@@ -142,12 +162,15 @@ def main(argv):
     filter["plaats"] = plaats
 
     print "max_results=%s" % max_results
-    handelsnamen = search(filter, max_results)
+    resultaten = search(filter, max_results)
+    organisaties = resultaten["organisaties"]
 
-    if handelsnamen is not None:
-        for handelsnaam in handelsnamen:
-            print handelsnaam
-            print ("Ingelezen resultaten: %s") % len(handelsnamen)
+    if organisaties is not None:
+        for organisatie in organisaties:
+            print organisatie["handelsnaam"] + " [" + organisatie["kvk_nummer"]+ "]"
+        print ("Ingelezen resultaten: %s") % len(organisaties)
+
+    print resultaten["stats"]
 
 if __name__ == "__main__":
     main(sys.argv[1:])
