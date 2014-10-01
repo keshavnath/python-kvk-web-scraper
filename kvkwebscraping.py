@@ -1,11 +1,17 @@
 #!/usr/bin/python
 
 from bs4 import BeautifulSoup
+from multiprocessing import Pool as ThreadPool
 from urllib2 import urlopen
 from urllib import urlencode
-import re
 import json
+import pprint
+import re
 import sys, getopt
+import time
+
+# Increase recursion limit (stack depth)
+sys.setrecursionlimit(10000)
 
 def create_filter_url(filter, page):
     start = page * 10
@@ -104,24 +110,46 @@ def init(search_url):
     search_results["pages"] = calc_aantal_paginas(search_results["results"])
     return search_results 
 
+def process_search(search_url):
+    organisaties = []
+    searchpage = load_searchpage(search_url)
+    retrieve_organisaties(organisaties, searchpage)
+    return organisaties
+
 def search(filter, max_results):
+    start_time = time.time()
+
     if max_results > -1:
         max_pages = (max_results - (max_results % 10)) / 10
     else:
         max_pages = -1
+    
     search_results = init(create_filter_url(filter, 0))
     resultaten= {}
     resultaten["stats"] = ("Aantal resultaten: " + str(search_results["results"]) + " [aantal pagina's: " + str(search_results["pages"]) + "]")
+    
     if search_results["pages"] < max_pages or max_pages == -1:
         max_pages = search_results["pages"]
-    print "Aantal resultaten: %s [aantal pagina's: %s, max pages: %s]" % (str(search_results["results"]), str(search_results["pages"]), max_pages)
-    organisaties = []
-    resultaten["organisaties"] = organisaties
+    
+    # Create list of search urls
+    search_urls = []
     for page in range(0, max_pages):
-        if page % 10 == 0:
-            print "Pages read: %s" % page
-        searchpage = load_searchpage(create_filter_url(filter, page))
-        retrieve_organisaties(organisaties, searchpage)
+        search_urls.append(create_filter_url(filter, page))
+    
+    # Create pool of worker threads
+    pool = ThreadPool(4)
+    # Open the urls in their own threads
+    organisaties = pool.map(process_search, search_urls)
+    pool.close()
+    pool.join()
+
+    # Make a single organisation array
+    new_organisaties = []
+    for i in range(0, len(organisaties)):
+        new_organisaties = new_organisaties + organisaties[i]
+    resultaten["organisaties"] = new_organisaties
+    resultaten["exectime"] = time.time() - start_time
+    
     return resultaten
 
 def help_message():
@@ -162,15 +190,22 @@ def main(argv):
     filter["plaats"] = plaats
 
     print "max_results=%s" % max_results
+    print ""
+
     resultaten = search(filter, max_results)
     organisaties = resultaten["organisaties"]
-
+    
+    pp = pprint.PrettyPrinter(indent=4)
+    #pp.pprint(resultaten)
+    
     if organisaties is not None:
         for organisatie in organisaties:
             print organisatie["handelsnaam"] + " [" + organisatie["kvk_nummer"]+ "]"
-        print ("Ingelezen resultaten: %s") % len(organisaties)
-
+   
+    print "" 
     print resultaten["stats"]
+    print "Ingelezen resultaten: %s" % len(organisaties)
+    print "Exectime: %s ms" % resultaten["exectime"]
 
 if __name__ == "__main__":
     main(sys.argv[1:])
