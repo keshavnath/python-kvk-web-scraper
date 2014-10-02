@@ -88,8 +88,10 @@ def load_searchpage(search_url):
     request = urlopen(search_url)
     response = request.read()
     json_encoded = response[response.find("(") + 1 : response.find(");")]
+    # Fix bug that the json decoder throws an error if the special tab character (\t) if found in the text
     json_encoded = json_encoded.replace("\t", " ")
-    #json_encoded = re.sub(r'(?<=<.*>)(.*)(\\)(.*)(?=</.*>)', r'\1\\\2\3', json_encoded)
+    # Fix bug that if a backslash is used in text the json decoder throws an error
+    json_encoded = re.sub(r'(\\)(?![\"\'abfnrtv])', r'\\\1', json_encoded)
     try:
         json_decoded = json.loads(json_encoded)
     except ValueError as e:
