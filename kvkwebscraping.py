@@ -1,60 +1,45 @@
 #!/usr/bin/python
 
-import getopt
-import pprint
+import argparse
 import sys
 from search import Search
 from timer import Timer
 
 def help_message():
-    print "webscraping101.py -n <handelsnaam> -p <plaats> -s <startpage> -m <maxpages>"
+    print "kvkwebscraping.py -n <handelsnaam> -p <plaats> -s <startpage> -m <maxpages>"
 
-def main(argv):
+def parse_args():
+    parser = argparse.ArgumentParser(description="Web scraping of the KvK search functionality.")
+
+    parser.add_argument("-n", "--handelsnaam", metavar="handelsnaam", default="", help="name or partial name of an organisation to search for")
+    parser.add_argument("-p", "--plaats", metavar="plaats", default="", help="city to limit the search to")
+    parser.add_argument("-s", "--startpage", metavar="startpage", type=int, default=1, help="page to start processing from")
+    parser.add_argument("-m", "--maxpages", metavar="maxpages", type=int, default=1, help="maximum number of pages to return")
+
+    args = parser.parse_args()
+
+    if args.handelsnaam == "" and args.plaats == "":
+        print "error: handelsnaam or plaats must be specified\n"
+        parser.print_help()
+        sys.exit(2)
+        
+    return args
+
+def main(args):
     timer = Timer()
     timer.start()
             
-    handelsnaam = ""
-    plaats = ""
-    startpage = 1
-    maxpages = 1
-
-    try:
-        opts, args = getopt.getopt(argv, "hn:p:s:m:", ["handelsnaam=", "plaats=", "startpage", "maxpages="])
-    except getopt.GetoptError, exec_error:
-        print exec_error
-        help_message()
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == "-h":
-            help_message()
-            sys.exit()
-        elif opt in ("-n", "--handelsnaam"):
-            handelsnaam = arg
-        elif opt in ("-p", "--plaats"):
-            plaats = arg
-        elif opt in ("-s", "--startpage"):
-            startpage = int(arg)
-        elif opt in ("-m", "--maxpages"):
-            maxpages = int(arg)
-    if (handelsnaam == "") and (plaats == ""):
-        print "Error: no parameters specified"
-        help_message()
-        sys.exit(2)
-
     filter = {}
-    filter["handelsnaam"] = handelsnaam
+    filter["handelsnaam"] = args.handelsnaam
     filter["kvknummer"] = ""
     filter["straat"] = ""
     filter["huisnummer"] = ""
     filter["postcode"] = ""
-    filter["plaats"] = plaats
+    filter["plaats"] = args.plaats
 
-    search = Search(filter, startpage, maxpages)
+    search = Search(filter, args.startpage, args.maxpages)
     results = search.run()
     organisations = results["organisaties"]
-    
-    pp = pprint.PrettyPrinter(indent=4)
-    #pp.pprint(resultaten)
     
     if organisations is not None:
         for organisation in organisations:
@@ -70,4 +55,4 @@ def main(argv):
     print "Total exectime: %s ms" % timer.exectime()
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main(parse_args())
