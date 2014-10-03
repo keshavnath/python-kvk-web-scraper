@@ -118,24 +118,25 @@ def process_search(search_url):
     retrieve_organisaties(organisaties, searchpage)
     return organisaties
 
-def search(filter, max_results):
+def search(filter, startpage, maxpages):
     start_time = time.time()
 
-    if max_results > -1:
-        max_pages = (max_results - (max_results % 10)) / 10
-    else:
-        max_pages = -1
-    
-    search_results = init(create_filter_url(filter, 0))
+    search_results = init(create_filter_url(filter, startpage))
+
     resultaten= {}
     resultaten["stats"] = ("Aantal resultaten: " + str(search_results["results"]) + " [aantal pagina's: " + str(search_results["pages"]) + "]")
-    
-    if search_results["pages"] < max_pages or max_pages == -1:
-        max_pages = search_results["pages"]
-    
+  
+    if search_results["pages"] < startpage: 
+        raise Exception("Error: startpage exceeds available pages [pages=" + str(search_results["pages"]) + "]")
+    if search_results["pages"] < startpage + maxpages:
+        maxpages = search_results["pages"]
+
+    print "startpage=%s" % startpage
+    print "maxpages=%s (%s)" % (maxpages, (maxpages - 1))
+        
     # Create list of search urls
     search_urls = []
-    for page in range(0, max_pages):
+    for page in range(startpage, startpage + maxpages):
         search_urls.append(create_filter_url(filter, page))
     
     # Create pool of worker threads
@@ -155,15 +156,16 @@ def search(filter, max_results):
     return resultaten
 
 def help_message():
-    print "webscraping101.py -n <handelsnaam> -p <plaats> -m <maxresults>"
+    print "webscraping101.py -n <handelsnaam> -p <plaats> -s <startpage> -m <maxpages>"
 
 def main(argv):
     handelsnaam = ""
     plaats = ""
-    max_results = -1
+    startpage = 1
+    maxpages = 1
 
     try:
-        opts, args = getopt.getopt(argv, "hn:p:m:", ["handelsnaam=", "plaats=", "max_results="])
+        opts, args = getopt.getopt(argv, "hn:p:s:m:", ["handelsnaam=", "plaats=", "startpage", "maxpages="])
     except getopt.GetoptError, exec_error:
         print exec_error
         help_message()
@@ -176,8 +178,10 @@ def main(argv):
             handelsnaam = arg
         elif opt in ("-p", "--plaats"):
             plaats = arg
-        elif opt in ("-m", "--max_results"):
-            max_results = int(arg)
+        elif opt in ("-s", "--startpage"):
+            startpage = int(arg)
+        elif opt in ("-m", "--maxpages"):
+            maxpages = int(arg)
     if (handelsnaam == "") and (plaats == ""):
         print "Error: no parameters specified"
         help_message()
@@ -191,10 +195,10 @@ def main(argv):
     filter["postcode"] = ""
     filter["plaats"] = plaats
 
-    print "max_results=%s" % max_results
+    print "startpage=%s, maxpages=%s" % (startpage, maxpages)
     print ""
 
-    resultaten = search(filter, max_results)
+    resultaten = search(filter, startpage, maxpages)
     organisaties = resultaten["organisaties"]
     
     pp = pprint.PrettyPrinter(indent=4)
