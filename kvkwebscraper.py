@@ -6,13 +6,13 @@ import sys
 from search import Search
 from timer import Timer
 
-version = 0.5
+release = "0.5.0"
 
 def help_message():
     print "kvkwebscraping.py -n <handelsnaam> -p <plaats> -s <startpage> -m <maxpages>"
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Web scraping of the KvK search functionality [version " + str(version) + "]")
+    parser = argparse.ArgumentParser(description="Web scraping of the KvK search functionality [version " + str(release) + "]")
 
     parser.add_argument("-n", "--handelsnaam", metavar="handelsnaam", default="", help="name or partial name of an organisation to search for")
     parser.add_argument("-p", "--plaats", metavar="plaats", default="", help="city to limit the search to")
