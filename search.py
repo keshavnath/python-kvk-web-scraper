@@ -32,7 +32,7 @@ class Search:
         if self.search_results["pages"] < startpage: 
             raise Exception("Error: startpage exceeds available pages [pages=" + str(self.search_results["pages"]) + "]")
         if self.search_results["pages"] < startpage + maxpages:
-            maxpages = self.search_results["pages"]
+            self.maxpages = self.search_results["pages"]
 
     def get_search_url(self):
         return self.search_url
