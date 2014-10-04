@@ -19,13 +19,9 @@ This code has only been test under Linux Mint 17.
 * **Terminated organisations** - Currently organisations that have been 
   terminated are not searched.
 
-* **Search options** - Search options are limited to 'handelsnaam' and
-  'plaats'.
-
 ## Features
 
-* **Search options** - The following search options are supported: 'handelsnaam'
-  and 'plaats'.
+* **Search options** - All search options are supported.
 
 * **Paging** - Paging is supported. It is possible to specify the starting
   page and number of pages to read.
@@ -37,8 +33,6 @@ This code has only been test under Linux Mint 17.
 ## Future improvements
 
 * **Terminated organisations** - Add an option to search for terminated organisations.
-
-* **Search options** - Support all extended search options.
 
 * **Simple GUI** - Add a simpel web GUI as front-end.
 
@@ -79,5 +73,8 @@ Start the Flask microframework:
 Call the service:
 
 ```
-curl -i http://127.0.0.1:5000/v1/organisations?plaats=Mijnsheerenland&maxpages=2
+curl -i 'http://127.0.0.1:5000/api/v1/organisations?plaats=Mijnsherenland&startpage=1&vervallen=true&uitgeschreven=true'
 ```
+
+Please note: when passing multiple arguments in the URL `curl` requires single 
+quotes around the URL.
