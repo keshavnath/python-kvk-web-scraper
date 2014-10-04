@@ -6,7 +6,7 @@ import sys
 from search import Search
 from timer import Timer
 
-release = "0.5.0"
+release = "0.6.0"
 
 def help_message():
     print "kvkwebscraping.py -n <handelsnaam> -p <plaats> -s <startpage> -m <maxpages>"
