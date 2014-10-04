@@ -7,16 +7,16 @@ from search import Search
 from handler import NoResultsError
 from timer import Timer
 
-release = "0.6.0"
+release = "0.7.0"
 
 app = Flask(__name__)
 app.logger.addHandler(logger_init.fh)
-app.logger.setLevel(logging.INFO)
+app.logger.setLevel(logging.DEBUG)
 
 def unprocessable_entity():
     message = {
         "status": 422,
-        "message": "Parameter 'handelsnaam' or 'plaats' must be specified"
+        "message": "Parameter 'handelsnaam', 'kvknummer', 'straat', 'huisnummer', 'postcode' or 'plaats' must be specified"
     }
     resp = jsonify(message)
     resp.status_code = 422
@@ -33,25 +33,50 @@ def not_found():
 
     return resp
 
+def check_args(name):
+    value = ""
+    if name in request.args:
+        value = request.args[name]
+    return value
+
+def check_args_boolean(name, default, zero_one):
+    if zero_one:
+        value = "1" if default else "0"
+    else:
+        value = "true" if default else "false"
+    if name in request.args:
+        if request.args[name] in ("true", "false"):
+            if zero_one:
+                value = "1" if request.args[name] == "true" else "0"
+            else:
+                value = request.args[name]
+        else:
+            raise "Illegal value"
+    return value
+                 
 @app.route('/api/v1/organisations', methods = [ 'GET' ])
 def api_organisations():
     timer = Timer()
     timer.start()
 
-    filter = {}
-    filter["handelsnaam"] = ""
-    filter["kvknummer"] = ""
-    filter["straat"] = ""
-    filter["huisnummer"] = ""
-    filter["postcode"] = ""
-    filter["plaats"] = ""
-                            
-    if 'handelsnaam' in request.args:
-        filter["handelsnaam"] = request.args['handelsnaam']
-    if 'plaats' in request.args:
-        filter["plaats"] = request.args['plaats']
+    app.logger.debug(request.args)
 
-    if filter["handelsnaam"] == "" and filter["plaats"] == "":
+    filter = {}
+    filter["handelsnaam"] = check_args("handelsnaam")
+    filter["kvknummer"] = check_args("kvknummer")
+    filter["straat"] = check_args("straat")
+    filter["huisnummer"] = check_args("huisnummer")
+    filter["postcode"] = check_args("postcode")
+    filter["plaats"] = check_args("plaats")
+    filter["hoofdvestiging"] = check_args_boolean("hoofdvestiging", True, False)
+    filter["nevenvestiging"] = check_args_boolean("nevenvestiging", True, False) 
+    filter["rechtspersoon"] = check_args_boolean("rechtspersoon", True, False)
+    filter["vervallen"] = check_args_boolean("vervallen", False, True)
+    filter["uitgeschreven"] = check_args_boolean("uitgeschreven", False, True)
+
+    app.logger.debug(filter)
+                                
+    if filter["handelsnaam"] == "" and filter["kvknummer"] == "" and filter["straat"] == "" and filter["huisnummer"] == "" and filter["postcode"] == "" and filter["plaats"] == "":
         return unprocessable_entity()
     else:
         if 'startpage' in request.args:
@@ -73,7 +98,7 @@ def api_organisations():
             timer.stop();
             
             results["total_exectime"] = timer.exectime()
-            results["version"] = "v1"
+            results["api_version"] = "v1"
             results["release"] = release
 
             resp = jsonify(results)

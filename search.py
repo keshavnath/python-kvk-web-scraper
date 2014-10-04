@@ -59,7 +59,7 @@ class Search:
         search_urls = []
         filter = Filter(self.filter, self.startpage, self.maxpages)
         for page in range(self.startpage, self.startpage + self.maxpages):
-            search_urls.append(filter.create_filter_url(page * 10))
+            search_urls.append(filter.create_filter_url((page - 1) * 10))
         
         # Create pool of worker threads
         pool = ThreadPool(4)
@@ -73,6 +73,6 @@ class Search:
         
         timer.stop()
         
-        results["stats"] = [ { "exectime": timer.exectime(), "matches": { "total": str(self.search_results["results"]), "pages": str(self.search_results["pages"]) }, "read": { "page_from": str(self.startpage), "page_to": str(self.maxpages) + "]" } } ]
+        results["stats"] = { "exectime": timer.exectime(), "matches": { "total": str(self.search_results["results"]), "pages": str(self.search_results["pages"]) }, "read": { "page_from": str(self.startpage), "page_to": str(self.maxpages) } }
         
         return results
