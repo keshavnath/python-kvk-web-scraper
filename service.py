@@ -7,6 +7,8 @@ from search import Search
 from handler import NoResultsError
 from timer import Timer
 
+release = "0.5.0"
+
 app = Flask(__name__)
 app.logger.addHandler(logger_init.fh)
 app.logger.setLevel(logging.INFO)
@@ -70,8 +72,9 @@ def api_organisations():
             
             timer.stop();
             
-            results["version"] = "v1"
             results["total_exectime"] = timer.exectime()
+            results["version"] = "v1"
+            results["release"] = release
 
             resp = jsonify(results)
             resp.status_code = 200

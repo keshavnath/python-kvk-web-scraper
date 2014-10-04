@@ -1,11 +1,18 @@
 #! /bin/bash
 
+function update_release {
+    FILENAME=$1
+    RELEASE=$2
+    mv $FILENAME $FILENAME.tmp
+    sed -e "s/release = .*/release = \"$RELEASE\"/g" $FILENAME.tmp > $FILENAME
+    rm $FILENAME.tmp
+    chmod u+x $FILENAME
+}
+
 if [ "$1" == "" ]; then
     echo "Error: the version number must be passed as argument"
     exit 2
 fi
 
-mv kvkwebscraping.py kvkwebscraping.py.tmp
-sed -e "s/version = .*/version = $1/g" kvkwebscraping.py.tmp > kvkwebscraping.py
-rm kvkwebscraping.py.tmp
-chmod u+x kvkwebscraping.py
+update_release "kvkwebscraper.py" $1
+update_release "service.py" $1
