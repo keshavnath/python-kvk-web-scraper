@@ -8,7 +8,7 @@ from search import Search
 from timer import Timer
 from handler import NoResultsError
 
-release = "0.6.0"
+release = "0.7.0"
 
 logger = logging.getLogger("webscraper_app.kvkwebscraper")
 

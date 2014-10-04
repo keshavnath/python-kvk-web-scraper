@@ -7,7 +7,7 @@ from search import Search
 from handler import NoResultsError
 from timer import Timer
 
-release = "0.6.0"
+release = "0.7.0"
 
 app = Flask(__name__)
 app.logger.addHandler(logger_init.fh)
