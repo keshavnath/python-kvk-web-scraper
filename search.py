@@ -17,6 +17,7 @@ class Search:
     startpage = 1
     maxpages = 1
     search_results = None
+    search_url = None
 
     def __init__(self, filter, startpage, maxpages):
         self.filter = filter
@@ -24,14 +25,17 @@ class Search:
         self.maxpages = maxpages
         
         filter = Filter(self.filter, self.startpage, self.maxpages)
-        search_url = filter.create_filter_url(self.startpage)
-        handler = Handler(search_url)
+        self.search_url = filter.create_filter_url(self.startpage)
+        handler = Handler(self.search_url)
         self.search_results = handler.init()
       
         if self.search_results["pages"] < startpage: 
             raise Exception("Error: startpage exceeds available pages [pages=" + str(self.search_results["pages"]) + "]")
         if self.search_results["pages"] < startpage + maxpages:
-            maxpages = self.search_results["pages"]
+            self.maxpages = self.search_results["pages"]
+
+    def get_search_url(self):
+        return self.search_url
 
     def process_search(self, search_url):
         organisaties = []
@@ -65,11 +69,10 @@ class Search:
         pool.join()
     
         results = {}
-        results["stats"] = ("Aantal resultaten: " + str(self.search_results["results"]) + " [pagina's: " + str(self.search_results["pages"]) + ", ingelezen: " + str(self.startpage) + "-" + str(self.maxpages) + "]")
         results["organisaties"] = self.consolidate(organisaties)
         
         timer.stop()
         
-        results["exectime"] = timer.exectime()
+        results["stats"] = [ { "exectime": timer.exectime(), "matches": { "total": str(self.search_results["results"]), "pages": str(self.search_results["pages"]) }, "read": { "page_from": str(self.startpage), "page_to": str(self.maxpages) + "]" } } ]
         
         return results
