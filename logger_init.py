@@ -10,7 +10,7 @@ logger.setLevel(logging.DEBUG)
 
 # Create console handler
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 
 # Create formatter and add it to handlers
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -21,4 +21,4 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
-logger.info("Logging initialized")
+logger.debug("Logging initialized")
