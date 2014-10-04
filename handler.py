@@ -5,13 +5,16 @@ from urllib2 import urlopen
 from urllib import urlencode
 import json
 import re
+import logging
 
 class Handler:
     'Web scraper for the KvK website search functionality'
     search_url = ""
+    logger = None
 
     def __init__(self, search_url):
         self.search_url = search_url
+        self.logger = logging.getLogger("webscraper_app.handler")
 
     def has_hoofdvestiging_tag(self, search_result):
         result = search_result.find("a", class_="hoofdvestigingTag")
@@ -82,19 +85,30 @@ class Handler:
         try:
             json_decoded = json.loads(json_encoded)
         except ValueError as e:
-            output_to_file("response.html", response)
-            output_to_file("encoded.json", json_encoded)
-            raise Exception("Error decoding json, check html_respons.html and encoded.json [" + str(e) + "]")
+            message = "Error decoding json, check html_respons.html and encoded.json [" + str(e) + "]"
+            self.logger.error(message + "\n --- response --- \n" + response + "\n --- json_encoded:\n" + json_encoded)
+            raise Exception(message)
         else:
-            soup = BeautifulSoup(json_decoded["html"], "lxml")
-            searchpage = soup.find("div", class_="searchpage")
-            if searchpage is None:
-                raise "Search page not found"
-            return searchpage
+            try:
+                soup = BeautifulSoup(json_decoded["html"], "lxml")
+            except KeyError as e:
+                message = "No results [" + str(e) + "]"
+                self.logger.error(message + "\n --- json_encoded --- \n" + response + "\n --- json_encoded:\n" + json_encoded)
+                raise NoResultsError(message)
+            else:
+                searchpage = soup.find("div", class_="searchpage")
+                if searchpage is None:
+                    raise "Search page not found"
+                return searchpage
 
     def init(self):
         searchpage = self.load_searchpage()
         search_results = {}
         search_results["results"] = self.retrieve_aantal_resultaten(searchpage)
         search_results["pages"] = self.calc_aantal_paginas(search_results["results"])
-        return search_results 
+        return search_results
+
+class NoResultsError(Exception):
+    def __init__(self, arg):
+        # Set some exception infomation
+        self.msg = arg

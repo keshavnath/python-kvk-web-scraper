@@ -17,6 +17,7 @@ class Search:
     startpage = 1
     maxpages = 1
     search_results = None
+    search_url = None
 
     def __init__(self, filter, startpage, maxpages):
         self.filter = filter
@@ -24,14 +25,17 @@ class Search:
         self.maxpages = maxpages
         
         filter = Filter(self.filter, self.startpage, self.maxpages)
-        search_url = filter.create_filter_url(self.startpage)
-        handler = Handler(search_url)
+        self.search_url = filter.create_filter_url(self.startpage)
+        handler = Handler(self.search_url)
         self.search_results = handler.init()
       
         if self.search_results["pages"] < startpage: 
             raise Exception("Error: startpage exceeds available pages [pages=" + str(self.search_results["pages"]) + "]")
         if self.search_results["pages"] < startpage + maxpages:
             maxpages = self.search_results["pages"]
+
+    def get_search_url(self):
+        return self.search_url
 
     def process_search(self, search_url):
         organisaties = []

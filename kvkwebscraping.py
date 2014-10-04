@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import argparse
+import logger_init
 import sys
 from search import Search
 from timer import Timer
