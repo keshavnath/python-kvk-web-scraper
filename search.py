@@ -69,11 +69,10 @@ class Search:
         pool.join()
     
         results = {}
-        results["stats"] = ("Aantal resultaten: " + str(self.search_results["results"]) + " [pagina's: " + str(self.search_results["pages"]) + ", ingelezen: " + str(self.startpage) + "-" + str(self.maxpages) + "]")
         results["organisaties"] = self.consolidate(organisaties)
         
         timer.stop()
         
-        results["exectime"] = timer.exectime()
+        results["stats"] = [ { "exectime": timer.exectime(), "matches": { "total": str(self.search_results["results"]), "pages": str(self.search_results["pages"]) }, "read": { "page_from": str(self.startpage), "page_to": str(self.maxpages) + "]" } } ]
         
         return results

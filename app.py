@@ -5,6 +5,7 @@ import logger_init
 from flask import Flask, Response, url_for, jsonify, request
 from search import Search
 from handler import NoResultsError
+from timer import Timer
 
 app = Flask(__name__)
 app.logger.addHandler(logger_init.fh)
@@ -30,8 +31,11 @@ def not_found():
 
     return resp
 
-@app.route('/v1/organisations', methods = [ 'GET' ])
+@app.route('/api/v1/organisations', methods = [ 'GET' ])
 def api_organisations():
+    timer = Timer()
+    timer.start()
+
     filter = {}
     filter["handelsnaam"] = ""
     filter["kvknummer"] = ""
@@ -63,6 +67,12 @@ def api_organisations():
             return not_found()
         else:
             results = search.run()
+            
+            timer.stop();
+            
+            results["version"] = "v1"
+            results["total_exectime"] = timer.exectime()
+
             resp = jsonify(results)
             resp.status_code = 200
                                              
