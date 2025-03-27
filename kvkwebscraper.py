@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import argparse
 import logger_init
@@ -13,7 +13,7 @@ release = "0.7.0"
 logger = logging.getLogger("webscraper_app.kvkwebscraper")
 
 def help_message():
-    print "kvkwebscraping.py -n <handelsnaam> -p <plaats> -s <startpage> -m <maxpages>"
+    print("kvkwebscraping.py -n <handelsnaam> -p <plaats> -s <startpage> -m <maxpages>")
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Web scraping of the KvK search functionality [version " + str(release) + "]")
@@ -35,7 +35,7 @@ def parse_args():
     args = parser.parse_args()
 
     if args.handelsnaam == "" and args.kvknummer == "" and args.straat == "" and args.huisnummer == "" and args.postcode == "" and args.plaats == "":
-        print "error: handelsnaam, kvknummer, straat, huisnummer, postcode or plaats must be specified\n"
+        print("error: handelsnaam, kvknummer, straat, huisnummer, postcode or plaats must be specified\n")
         parser.print_help()
         sys.exit(2)
         
@@ -64,23 +64,23 @@ def main(args):
         search = Search(filter, args.startpage, args.maxpages)
         results = search.run()
     except NoResultsError:
-        print "Error: no results found"
+        print("Error: no results found")
         sys.exit(1)
 
     organisations = results["organisaties"]
     
     if organisations is not None:
         for organisation in organisations:
-            print organisation["handelsnaam"] + " [" + organisation["kvk_nummer"]+ "]"
+            print(organisation["handelsnaam"] + " [" + organisation["kvk_nummer"]+ "]")
    
-    print "" 
+    print("") 
     stats = results["stats"]
-    print "Gevonden: resultaten=%s, pagina's=%s" % (stats["matches"]["total"], stats["matches"]["pages"])
-    print "Ingelezen pagina: van=%s, tot=%s" % (stats["read"]["page_from"], stats["read"]["page_to"])
+    print("Gevonden: resultaten=%s, pagina's=%s" % (stats["matches"]["total"], stats["matches"]["pages"]))
+    print("Ingelezen pagina: van=%s, tot=%s" % (stats["read"]["page_from"], stats["read"]["page_to"]))
     
     timer.stop()
         
-    print "Exectime: totaal=%s ms, verwerken=%s ms" % (timer.exectime(), stats["exectime"])
+    print("Exectime: totaal=%s ms, verwerken=%s ms" % (timer.exectime(), stats["exectime"]))
 
 if __name__ == "__main__":
     main(parse_args())

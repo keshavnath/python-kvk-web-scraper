@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
-from urllib import urlencode
+from urllib.parse import urlencode
 import logging
 
 class Filter:

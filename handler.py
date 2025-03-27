@@ -1,8 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 from bs4 import BeautifulSoup
-from urllib2 import urlopen
-from urllib import urlencode
+from urllib.request import urlopen
+from urllib.parse import urlencode
 import json
 import re
 import logging
@@ -41,27 +41,25 @@ class Handler:
     def retrieve_kvk_meta(self, organisatie, kvk_meta):
         adres = {}
         adres_cnt = 0
-        adres_fields = ( "straat", "postcode", "plaats" )
+        adres_fields = ("straat", "huisnummer", "postcode", "plaats")
         organisatie["adres"] = adres
+        
         for li in kvk_meta.find_all("li"):
             if li.string is not None:
                 value = li.string.strip()
-                if (len(value) > 0):
-                    if (value == ""):
-                        continue
-                    elif (value.startswith("KVK")):
-                        organisatie["kvk_nummer"] = value[4:]
-                    elif (value.startswith("Vestigingsnr.")):
-                        organisatie["vestigingsnr"] = value[14:]
-                    elif (value.startswith("Nevenvestiging")):
-                        organisatie["nevenvestiging"] = "ja"
-                    elif (value.startswith("Rechtspersoon")):
-                        organisatie["nevenvestiging"] = "ja"
+                if len(value) > 0:
+                    if value.startswith("KVK"):
+                        organisatie["kvk_nummer"] = value[4:].strip()
+                    elif value.startswith("Vestigingsnr."):
+                        organisatie["vestigingsnr"] = value[14:].strip()
+                    elif value.startswith("Nevenvestiging"):
+                        organisatie["nevenvestiging"] = True
+                    elif value.startswith("Hoofdvestiging"):
+                        organisatie["hoofdvestiging"] = True
                     else:
-                        if (adres_cnt > len(adres_fields) - 1):
-                            print "Error: unknown value found after address [%s]" % value
-                        adres[adres_fields[adres_cnt]] = value
-                        adres_cnt += 1
+                        if adres_cnt < len(adres_fields):
+                            adres[adres_fields[adres_cnt]] = value
+                            adres_cnt += 1
 
     def retrieve_organisaties(self, organisaties, searchpage):
         for li in searchpage.find_all("li", class_="type1"):

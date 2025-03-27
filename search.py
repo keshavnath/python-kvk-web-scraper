@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 from multiprocessing import Pool as ThreadPool
 from timer import Timer
@@ -46,9 +46,8 @@ class Search:
     
     def consolidate(self, organisaties):
         new_organisaties = []
-        # Make a single organisation array
-        for i in range(0, len(organisaties)):
-            new_organisaties = new_organisaties + organisaties[i]
+        for i in range(len(organisaties)):
+            new_organisaties.extend(organisaties[i])
         return new_organisaties
 
     def run(self):
