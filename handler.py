@@ -75,6 +75,7 @@ class Handler:
     def load_searchpage(self):
         request = urlopen(self.search_url)
         response = request.read()
+        print(response)
         json_encoded = response[response.find("(") + 1 : response.find(");")]
         # Fix bug that the json decoder throws an error if the special tab character (\t) if found in the text
         json_encoded = json_encoded.replace("\t", " ")
